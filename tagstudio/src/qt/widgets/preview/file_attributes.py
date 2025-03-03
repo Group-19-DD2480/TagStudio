@@ -206,7 +206,7 @@ class FileAttributes(QWidget):
                         font_family = f"{font.getname()[0]} ({font.getname()[1]}) "
                 except (FileNotFoundError, OSError) as e:
                     logger.error(
-                       "[FileAttributes] Could not process file stats", filepath=filepath, error=e
+                        "[FileAttributes] Could not process file stats", filepath=filepath, error=e
                     )
 
             # Format and display any stat variables
