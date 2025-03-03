@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from src.core.enums import Theme, SettingItems
+from src.core.enums import SettingItems, Theme
 from src.core.library.alchemy.library import Library
 from src.core.media_types import MediaCategories
 from src.qt.helpers.file_opener import FileOpenerHelper, FileOpenerLabel
@@ -173,7 +173,7 @@ class FileAttributes(QWidget):
                     file_str += f"{"\u200b".join(part_)}{separator}</b>"
                 else:
                     if file_str != "":
-                        file_str += f"<br>"
+                        file_str += "<br>"
                     file_str += f"<b>{"\u200b".join(part_)}</b>"
             self.file_label.setText(file_str)
             self.file_label.setCursor(Qt.CursorShape.PointingHandCursor)
