@@ -1,9 +1,14 @@
 import os
-from pathlib import Path
+import pathlib
 from unittest.mock import patch
 
 import pytest
+from PySide6.QtGui import (
+    QAction,
+)
+from PySide6.QtWidgets import QMenu, QMenuBar
 from src.core.enums import SettingItems
+from src.core.library.alchemy.library import LibraryStatus
 from src.qt.modals.settings_panel import SettingsPanel
 from src.qt.widgets.preview_panel import PreviewPanel
 
@@ -30,9 +35,9 @@ def test_filepath_setting(qtbot, qt_driver, filepath_option):
 @pytest.mark.parametrize(
     "filepath_option, expected_path",
     [
-        ("show full path", lambda library: Path(library.library_dir / "one/two/bar.md")),
-        ("show relative path", lambda library: Path("one/two/bar.md")),
-        ("show only file name", lambda library: Path("bar.md")),
+        ("show full path", lambda library: pathlib.Path(library.library_dir / "one/two/bar.md")),
+        ("show relative path", lambda library: pathlib.Path("one/two/bar.md")),
+        ("show only file name", lambda library: pathlib.Path("bar.md")),
     ],
 )
 def test_file_path_display(qt_driver, library, filepath_option, expected_path):
@@ -45,9 +50,9 @@ def test_file_path_display(qt_driver, library, filepath_option, expected_path):
     with patch.object(qt_driver.settings, "value", return_value=filepath_option):
         # Apply the mock value
         filename = library.get_entry(2).path
-        panel.file_attrs.update_stats(filepath=Path(library.library_dir / filename))
+        panel.file_attrs.update_stats(filepath=pathlib.Path(library.library_dir / filename))
 
-        # Generate the expected file string. 
+        # Generate the expected file string.
         # This is copied directly from the file_attributes.py file
         # can be imported as a function in the future
         display_path = expected_path(library)
@@ -64,3 +69,50 @@ def test_file_path_display(qt_driver, library, filepath_option, expected_path):
 
         # Assert the file path is displayed correctly
         assert panel.file_attrs.file_label.text() == file_str
+
+
+@pytest.mark.parametrize(
+    "filepath_option, expected_title",
+    [
+        ("show full path", lambda path, base_title: f"{base_title} - Library '{path}'"),
+        (
+            "show relative path",
+            lambda path, base_title: f"{base_title} - Library '{path.name}'",
+        ),
+        (
+            "show only file name",
+            lambda path, base_title: f"{base_title} - Library '{path.name}'",
+        ),
+    ],
+)
+def test_title_update(qtbot, qt_driver, filepath_option, expected_title):
+    base_title = qt_driver.base_title
+    test_path = pathlib.Path("/dev/null")
+    open_status = LibraryStatus(
+        success=True,
+        library_path=test_path,
+        message="",
+        msg_description="",
+    )
+    # Set the file path option
+    qt_driver.settings.setValue(SettingItems.SHOW_FILEPATH, filepath_option)
+    menu_bar = QMenuBar()
+
+    qt_driver.open_recent_library_menu = QMenu(menu_bar)
+    qt_driver.manage_file_ext_action = QAction(menu_bar)
+    qt_driver.save_library_backup_action = QAction(menu_bar)
+    qt_driver.close_library_action = QAction(menu_bar)
+    qt_driver.refresh_dir_action = QAction(menu_bar)
+    qt_driver.tag_manager_action = QAction(menu_bar)
+    qt_driver.color_manager_action = QAction(menu_bar)
+    qt_driver.new_tag_action = QAction(menu_bar)
+    qt_driver.fix_dupe_files_action = QAction(menu_bar)
+    qt_driver.fix_unlinked_entries_action = QAction(menu_bar)
+    qt_driver.clear_thumb_cache_action = QAction(menu_bar)
+    qt_driver.folders_to_tags_action = QAction(menu_bar)
+
+    # Trigger the update
+    qt_driver.init_library(pathlib.Path(test_path), open_status)
+
+    # Assert the title is updated correctly
+    qt_driver.main_window.setWindowTitle.assert_called_with(expected_title(test_path, base_title))
