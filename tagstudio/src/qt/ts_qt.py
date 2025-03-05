@@ -1870,12 +1870,11 @@ class QtDriver(DriverMixin, QObject):
         filepath_option: str = str(
             self.settings.value(SettingItems.SHOW_FILEPATH, defaultValue="show full path", type=str)
         )
-        library_dir_display = "show full path"
-        if filepath_option == "show full path":
-            library_dir_display = path
-        else:
-            library_dir_display = path.name
-        translation_params = {"key": "splash.opening_library", "library_path": str(library_dir_display)}
+        library_dir_display = path if filepath_option == "show full path" else path.name
+        translation_params = {
+            "key": "splash.opening_library",
+            "library_path": str(library_dir_display),
+        }
         Translations.translate_with_setter(
             self.main_window.landing_widget.set_status_label, **translation_params
         )
